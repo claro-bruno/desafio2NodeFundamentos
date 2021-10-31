@@ -25,11 +25,13 @@ function checksExistsUserAccount(request, response, next) {
 function checksCreateTodosUserAvailability(request, response, next) {
   const { user } = request;
 
-  if((!user.pro && user.todos.length < 10) || user.pro) {
-    next()
+  if((!user.pro && user.todos.length < 10)) {
+    return next();
+  } else if (user.pro){
+    return next();
   } else {
     return response.status(403).json({ error: 'Limit!' }); 
-  } 
+  }
 }
 
 function checksTodoExists(request, response, next) {
@@ -38,18 +40,15 @@ function checksTodoExists(request, response, next) {
 
  
   const user = users.find((user) => user.username === username);
-  
-
   if (!user) {
     return response.status(404).json({ error: 'User Not Found!' }); 
   }
 
-  const checkId = validate(id);
-  if(!checkId) {
-    return response.status(400).json({ error: 'Id invalid' });
-  }
 
-  const todo = users.todos.find((todos) => todos.id === id);
+  const checkUuidIsValid = validate(id);
+  if (!checkUuidIsValid) return response.status(400).json({ error: 'Id invalid' });
+
+  const todo = user.todos.find((todos) => todos.id === id);
 
   if (!todo) {
     return response.status(404).json({ error: 'Todo Not Found!' }); 
@@ -62,10 +61,11 @@ function checksTodoExists(request, response, next) {
 
 function findUserById(request, response, next) {
   const { id } = request.params;
-  
+  if (!id) return response.status(400).json({ error: 'id is required' });
+
   const user = users.find(({ id: current }) => current === id);
   if(!user) {
-    return response.status(404).json({ error: 'User Already Exists!' }); 
+    return response.status(404).json({ error: 'User not found' }); 
   }
   request.user = user;
   return next();
